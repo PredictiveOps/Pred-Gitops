@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification
+  labels:
+    app.kubernetes.io/name: notification
+spec:
+  type: ClusterIP
+  selector:
+    app: notification
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification
+  labels:
+    app: notification
+    app.kubernetes.io/name: notification
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification
+  template:
+    metadata:
+      labels:
+        app: notification
+        app.kubernetes.io/name: notification
+    spec:
+      containers:
+        - name: notification
+          image: predictive-maintenance-notification:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka-headless.predictive-maintenance.svc.cluster.local:9092
+            - name: KAFKA_TOPIC
+              value: predictions
+            - name: NOTIFICATION_DB_HOST
+              value: notification-db
+            - name: NOTIFICATION_DB_PORT
+              value: "5432"
+            - name: NOTIFICATION_DB_NAME
+              value: notifications
+            - name: NOTIFICATION_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: notification-db-secret
+                  key: username
+            - name: NOTIFICATION_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: notification-db-secret
+                  key: password
+            - name: MAIL_PROVIDER_API_URL
+              value: https://api.mailprovider.example/send
+            - name: MAIL_PROVIDER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: notification-app-secret
+                  key: mail-api-key
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

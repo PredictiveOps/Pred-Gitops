@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion
+  labels:
+    app.kubernetes.io/name: ingestion
+spec:
+  type: NodePort
+  selector:
+    app: ingestion
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http
+      nodePort: 30081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion
+  labels:
+    app: ingestion
+    app.kubernetes.io/name: ingestion
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingestion
+  template:
+    metadata:
+      labels:
+        app: ingestion
+        app.kubernetes.io/name: ingestion
+    spec:
+      containers:
+        - name: ingestion
+          image: predictive-maintenance-ingestion:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: MQTT_BROKER
+              value: mqtt.example.com
+            - name: MQTT_PORT
+              value: "1883"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka-headless.predictive-maintenance.svc.cluster.local:9092
+            - name: KAFKA_TOPIC
+              value: sensor-events
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

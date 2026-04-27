@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  labels:
+    app.kubernetes.io/name: api-gateway
+spec:
+  type: ClusterIP
+  selector:
+    app: api-gateway
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  labels:
+    app: api-gateway
+    app.kubernetes.io/name: api-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        app.kubernetes.io/name: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: predictive-maintenance-api-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: EVENT_SERVICE_URL
+              value: http://event-processing:8080
+            - name: ML_SERVICE_URL
+              value: http://ml:8080
+            - name: NOTIFICATION_SERVICE_URL
+              value: http://notification:8080
+            - name: INGESTION_SERVICE_URL
+              value: http://ingestion:8080
+            - name: SHARED_DB_HOST
+              value: shared-db
+            - name: SHARED_DB_PORT
+              value: "5432"
+            - name: SHARED_DB_NAME
+              value: predictive_maintenance
+            - name: SHARED_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: shared-db-secret
+                  key: username
+            - name: SHARED_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: shared-db-secret
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
