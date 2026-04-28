@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-web-app
+  namespace: default
+  labels:
+    app: frontend-web-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend-web-app
+  template:
+    metadata:
+      labels:
+        app: frontend-web-app
+    spec:
+      containers:
+        - name: frontend-web-app
+          image: frontend-web-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: PORT
+              value: "3000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5

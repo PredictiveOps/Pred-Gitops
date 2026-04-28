@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ml-service
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/PredictiveOps/Pred-Gitops
+    targetRevision: main
+    path: apps/ML-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
