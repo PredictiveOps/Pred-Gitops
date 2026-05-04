@@ -2,11 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ingestion-service
-  namespace: default
+  namespace: pred
   labels:
     app: ingestion-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ingestion-service
@@ -17,30 +17,41 @@ spec:
     spec:
       containers:
         - name: ingestion-service
-          image: ingestion-service:latest
-          imagePullPolicy: Always
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ingestion-service:latest
           ports:
-            - containerPort: 8080
-              name: http
+            - containerPort: 8081
           env:
             - name: PORT
-              value: "8080"
-          resources:
-            requests:
-              cpu: 200m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
+              value: "8081"
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@postgres:5432/ingestion"
+            - name: KAFKA_BROKERS
+              value: "kafka:9092"
+            - name: KAFKA_TOPIC
+              value: "device-events"
+            - name: MQTT_BROKER
+              value: "ssl://mosquitto:8883"
+            - name: MQTT_CLIENT_ID
+              value: "ingestion-service"
+            - name: MQTT_TOPIC
+              value: "devices/+/data"
+            - name: MQTT_USERNAME
+              value: "pred-ingestion"
+            - name: MQTT_PASSWORD
+              value: "dev-ingestion-password"
+            - name: MQTT_CA_CERT
+              value: "/mosquitto/certs/ca.crt"
+          volumeMounts:
+            - name: mosquitto-certs
+              mountPath: /mosquitto/certs
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
-            initialDelaySeconds: 10
+              port: 8081
+            initialDelaySeconds: 15
             periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
+      volumes:
+        - name: mosquitto-certs
+          secret:
+            secretName: mosquitto-certs

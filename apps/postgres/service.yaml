@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ingestion-service
+  name: postgres
   namespace: pred
 spec:
   selector:
-    app: ingestion-service
+    app: postgres
   ports:
-    - port: 8081
-      targetPort: 8081
+    - port: 5432
+      targetPort: 5432
       protocol: TCP
   type: ClusterIP

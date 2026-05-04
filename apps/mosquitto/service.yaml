@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ingestion-service
+  name: mosquitto
   namespace: pred
 spec:
   selector:
-    app: ingestion-service
+    app: mosquitto
   ports:
-    - port: 8081
-      targetPort: 8081
+    - port: 8883
+      targetPort: 8883
       protocol: TCP
   type: ClusterIP

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: pred
+  labels:
+    app: mosquitto
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2
+          ports:
+            - containerPort: 8883
+          env:
+            - name: MQTT_DEVICE_USERNAME
+              value: "pred-device"
+            - name: MQTT_DEVICE_PASSWORD
+              value: "dev-device-password"
+            - name: MQTT_INGESTION_USERNAME
+              value: "pred-ingestion"
+            - name: MQTT_INGESTION_PASSWORD
+              value: "dev-ingestion-password"
+          volumeMounts:
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/acl
+              subPath: acl
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/entrypoint.sh
+              subPath: entrypoint.sh
+            - name: mosquitto-certs
+              mountPath: /mosquitto/config/certs
+              readOnly: true
+          command: ["/bin/sh", "/mosquitto/config/entrypoint.sh"]
+      volumes:
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
+            defaultMode: 0755
+        - name: mosquitto-certs
+          secret:
+            secretName: mosquitto-certs
