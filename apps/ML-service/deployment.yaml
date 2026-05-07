@@ -1,12 +1,59 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: ml-service
+#   namespace: default
+#   labels:
+#     app: ml-service
+# spec:
+#   replicas: 2
+#   selector:
+#     matchLabels:
+#       app: ml-service
+#   template:
+#     metadata:
+#       labels:
+#         app: ml-service
+#     spec:
+#       containers:
+#         - name: ml-service
+#           image: ml-service:latest
+#           imagePullPolicy: Always
+#           ports:
+#             - containerPort: 8000
+#               name: http
+#           env:
+#             - name: PORT
+#               value: "8000"
+#           resources:
+#             requests:
+#               cpu: 500m
+#               memory: 1Gi
+#             limits:
+#               cpu: 2000m
+#               memory: 2Gi
+#           livenessProbe:
+#             httpGet:
+#               path: /health
+#               port: 8000
+#             initialDelaySeconds: 15
+#             periodSeconds: 10
+#           readinessProbe:
+#             httpGet:
+#               path: /ready
+#               port: 8000
+#             initialDelaySeconds: 10
+#             periodSeconds: 5
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ml-service
-  namespace: default
+  namespace: pred
   labels:
     app: ml-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ml-service
@@ -17,30 +64,84 @@ spec:
     spec:
       containers:
         - name: ml-service
-          image: ml-service:latest
-          imagePullPolicy: Always
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ml-service:v1
+          imagePullPolicy: IfNotPresent
+
           ports:
-            - containerPort: 8000
-              name: http
+            - name: http
+              containerPort: 8003
+              protocol: TCP
+
           env:
-            - name: PORT
-              value: "8000"
-          resources:
-            requests:
-              cpu: 500m
-              memory: 1Gi
-            limits:
-              cpu: 2000m
-              memory: 2Gi
+            # HTTP server
+            - name: ML_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: ML_PORT
+
+            - name: ML_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: ML_LOG_LEVEL
+
+            # Database
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ml-db-secret
+                  key: DATABASE_URL
+
+            # Kafka
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: KAFKA_BROKERS
+
+            - name: ML_FEATURES_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: ML_FEATURES_TOPIC
+
+            - name: ML_KAFKA_GROUP_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: ML_KAFKA_GROUP_ID
+
+            - name: ML_KAFKA_OFFSET_RESET
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: ML_KAFKA_OFFSET_RESET
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
-            initialDelaySeconds: 15
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 5
+              port: 8003
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+              ephemeral-storage: "2Gi"

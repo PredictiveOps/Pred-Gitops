@@ -1,16 +1,33 @@
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: frontend-web-app
+#   namespace: default
+#   labels:
+#     app: frontend-web-app
+# spec:
+#   type: ClusterIP
+#   ports:
+#     - port: 3000
+#       targetPort: 3000
+#       protocol: TCP
+#       name: http
+#   selector:
+#     app: frontend-web-app
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend-web-app
-  namespace: default
+  name: web-frontend
+  namespace: pred
   labels:
-    app: frontend-web-app
+    app: web-frontend
 spec:
   type: ClusterIP
+  selector:
+    app: web-frontend
   ports:
-    - port: 3000
+    - name: http
+      port: 3000
       targetPort: 3000
       protocol: TCP
-      name: http
-  selector:
-    app: frontend-web-app

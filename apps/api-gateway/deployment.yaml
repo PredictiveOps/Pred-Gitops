@@ -1,46 +1,175 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: api-gateway
+#   namespace: default
+#   labels:
+#     app: api-gateway
+# spec:
+#   replicas: 3
+#   selector:
+#     matchLabels:
+#       app: api-gateway
+#   template:
+#     metadata:
+#       labels:
+#         app: api-gateway
+#     spec:
+#       containers:
+#         - name: api-gateway
+#           image: api-gateway:latest
+#           imagePullPolicy: Always
+#           ports:
+#             - containerPort: 8080
+#               name: http
+#           env:
+#             - name: PORT
+#               value: "8080"
+#           resources:
+#             requests:
+#               cpu: 100m
+#               memory: 256Mi
+#             limits:
+#               cpu: 500m
+#               memory: 512Mi
+#           livenessProbe:
+#             httpGet:
+#               path: /health
+#               port: 8080
+#             initialDelaySeconds: 10
+#             periodSeconds: 10
+#           readinessProbe:
+#             httpGet:
+#               path: /ready
+#               port: 8080
+#             initialDelaySeconds: 5
+#             periodSeconds: 5
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-gateway
-  namespace: default
+  name: kong
+  namespace: pred
   labels:
-    app: api-gateway
+    app: kong
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: api-gateway
+      app: kong
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: kong
     spec:
       containers:
-        - name: api-gateway
-          image: api-gateway:latest
-          imagePullPolicy: Always
+        - name: kong
+          image: kong:3.4.1
+          imagePullPolicy: IfNotPresent
+
           ports:
-            - containerPort: 8080
-              name: http
+            - name: proxy
+              containerPort: 8000
+              protocol: TCP
+            - name: admin
+              containerPort: 8001
+              protocol: TCP
+
           env:
-            - name: PORT
-              value: "8080"
+            - name: KONG_DATABASE
+              value: "off"
+
+            - name: KONG_PROXY_ACCESS_LOG
+              value: "/dev/stdout"
+
+            - name: KONG_ADMIN_ACCESS_LOG
+              value: "/dev/stdout"
+
+            - name: KONG_PROXY_ERROR_LOG
+              value: "/dev/stderr"
+
+            - name: KONG_ADMIN_ERROR_LOG
+              value: "/dev/stderr"
+
+            - name: KONG_ADMIN_LISTEN
+              value: "0.0.0.0:8001"
+
+            - name: KONG_PROXY_LISTEN
+              value: "0.0.0.0:8000"
+
+          readinessProbe:
+            exec:
+              command:
+                - kong
+                - health
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            exec:
+              command:
+                - kong
+                - health
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "512Mi"
             limits:
-              cpu: 500m
-              memory: 512Mi
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 5
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "1Gi"
+
+        - name: kong-jwks-sync
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/kong-jwks-sync:v1
+          imagePullPolicy: Always
+
+          env:
+            - name: KEYCLOAK_JWKS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: KEYCLOAK_JWKS_URL
+
+            - name: KONG_ADMIN_URL
+              value: "http://localhost:8001"
+
+            - name: KONG_CONFIG_TEMPLATE
+              value: "/etc/kong/kong.yml"
+
+            - name: POLL_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: POLL_INTERVAL
+
+            - name: RETRY_INTERVAL
+              value: "5"
+
+          volumeMounts:
+            - name: kong-config
+              mountPath: /etc/kong/kong.yml
+              subPath: kong.yml
+              readOnly: true
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "256Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+              ephemeral-storage: "512Mi"
+
+      volumes:
+        - name: kong-config
+          configMap:
+            name: kong-config

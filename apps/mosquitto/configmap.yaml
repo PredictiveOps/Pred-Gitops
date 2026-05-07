@@ -1,61 +1,111 @@
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: mosquitto-config
+#   namespace: pred
+# data:
+#   mosquitto.conf: |
+#     listener 8883 0.0.0.0
+#     protocol mqtt
+#     cafile /mosquitto/data/certs/ca.crt
+#     certfile /mosquitto/data/certs/server.crt
+#     keyfile /mosquitto/data/certs/server.key
+#     tls_version tlsv1.2
+#     require_certificate false
+#     allow_anonymous false
+#     password_file /mosquitto/data/passwords
+#     acl_file /mosquitto/config/acl
+#     user mosquitto
+#     persistence true
+#     persistence_location /mosquitto/data/
+#     log_dest stdout
+#     log_type error
+#     log_type warning
+#     log_type notice
+#     connection_messages true
+#   acl: |
+#     pattern write devices/%c/data
+#     user pred-ingestion
+#     topic read devices/+/data
+#     topic read $SYS/broker/version
+#   entrypoint.sh: |
+#     #!/bin/sh
+#     set -eu
+#     DEVICE_USERNAME="${MQTT_DEVICE_USERNAME:-pred-device}"
+#     DEVICE_PASSWORD="${MQTT_DEVICE_PASSWORD:-dev-device-password}"
+#     INGESTION_USERNAME="${MQTT_INGESTION_USERNAME:-pred-ingestion}"
+#     INGESTION_PASSWORD="${MQTT_INGESTION_PASSWORD:-dev-ingestion-password}"
+#     PASSWORD_FILE="/mosquitto/data/passwords"
+#     CA_FILE="/mosquitto/config/certs/ca.crt"
+#     CERT_FILE="/mosquitto/config/certs/server.crt"
+#     KEY_FILE="/mosquitto/config/certs/server.key"
+#     RUNTIME_CERT_DIR="/mosquitto/data/certs"
+#     RUNTIME_CA_FILE="$RUNTIME_CERT_DIR/ca.crt"
+#     RUNTIME_CERT_FILE="$RUNTIME_CERT_DIR/server.crt"
+#     RUNTIME_KEY_FILE="$RUNTIME_CERT_DIR/server.key"
+#     echo "[mosquitto-config] preparing runtime TLS files"
+#     mkdir -p "$RUNTIME_CERT_DIR"
+#     cp "$CA_FILE" "$RUNTIME_CA_FILE"
+#     cp "$CERT_FILE" "$RUNTIME_CERT_FILE"
+#     cp "$KEY_FILE" "$RUNTIME_KEY_FILE"
+#     chown mosquitto:mosquitto "$RUNTIME_CA_FILE" "$RUNTIME_CERT_FILE" "$RUNTIME_KEY_FILE"
+#     chmod 0644 "$RUNTIME_CA_FILE" "$RUNTIME_CERT_FILE"
+#     chmod 0600 "$RUNTIME_KEY_FILE"
+#     echo "[mosquitto-config] writing password file"
+#     rm -f "$PASSWORD_FILE"
+#     mosquitto_passwd -b -c "$PASSWORD_FILE" "$DEVICE_USERNAME" "$DEVICE_PASSWORD"
+#     mosquitto_passwd -b "$PASSWORD_FILE" "$INGESTION_USERNAME" "$INGESTION_PASSWORD"
+#     chmod 0600 "$PASSWORD_FILE"
+#     chown mosquitto:mosquitto "$PASSWORD_FILE"
+#     echo "[mosquitto-config] starting broker"
+#     exec mosquitto -c /mosquitto/config/mosquitto.conf
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mosquitto-config
   namespace: pred
+  labels:
+    app: mosquitto
 data:
   mosquitto.conf: |
+    per_listener_settings false
+
     listener 8883 0.0.0.0
     protocol mqtt
-    cafile /mosquitto/data/certs/ca.crt
-    certfile /mosquitto/data/certs/server.crt
-    keyfile /mosquitto/data/certs/server.key
-    tls_version tlsv1.2
+
+    cafile /mosquitto/certs/ca.crt
+    certfile /mosquitto/certs/server.crt
+    keyfile /mosquitto/certs/server.key
+
     require_certificate false
+    use_identity_as_username false
+
     allow_anonymous false
-    password_file /mosquitto/data/passwords
-    acl_file /mosquitto/config/acl
-    user mosquitto
+    password_file /mosquitto/config/passwordfile
+
     persistence true
     persistence_location /mosquitto/data/
+
     log_dest stdout
     log_type error
     log_type warning
     log_type notice
-    connection_messages true
-  acl: |
-    pattern write devices/%c/data
-    user pred-ingestion
-    topic read devices/+/data
-    topic read $SYS/broker/version
+    log_type information
+
   entrypoint.sh: |
     #!/bin/sh
-    set -eu
-    DEVICE_USERNAME="${MQTT_DEVICE_USERNAME:-pred-device}"
-    DEVICE_PASSWORD="${MQTT_DEVICE_PASSWORD:-dev-device-password}"
-    INGESTION_USERNAME="${MQTT_INGESTION_USERNAME:-pred-ingestion}"
-    INGESTION_PASSWORD="${MQTT_INGESTION_PASSWORD:-dev-ingestion-password}"
-    PASSWORD_FILE="/mosquitto/data/passwords"
-    CA_FILE="/mosquitto/config/certs/ca.crt"
-    CERT_FILE="/mosquitto/config/certs/server.crt"
-    KEY_FILE="/mosquitto/config/certs/server.key"
-    RUNTIME_CERT_DIR="/mosquitto/data/certs"
-    RUNTIME_CA_FILE="$RUNTIME_CERT_DIR/ca.crt"
-    RUNTIME_CERT_FILE="$RUNTIME_CERT_DIR/server.crt"
-    RUNTIME_KEY_FILE="$RUNTIME_CERT_DIR/server.key"
-    echo "[mosquitto-config] preparing runtime TLS files"
-    mkdir -p "$RUNTIME_CERT_DIR"
-    cp "$CA_FILE" "$RUNTIME_CA_FILE"
-    cp "$CERT_FILE" "$RUNTIME_CERT_FILE"
-    cp "$KEY_FILE" "$RUNTIME_KEY_FILE"
-    chown mosquitto:mosquitto "$RUNTIME_CA_FILE" "$RUNTIME_CERT_FILE" "$RUNTIME_KEY_FILE"
-    chmod 0644 "$RUNTIME_CA_FILE" "$RUNTIME_CERT_FILE"
-    chmod 0600 "$RUNTIME_KEY_FILE"
-    echo "[mosquitto-config] writing password file"
-    rm -f "$PASSWORD_FILE"
-    mosquitto_passwd -b -c "$PASSWORD_FILE" "$DEVICE_USERNAME" "$DEVICE_PASSWORD"
-    mosquitto_passwd -b "$PASSWORD_FILE" "$INGESTION_USERNAME" "$INGESTION_PASSWORD"
-    chmod 0600 "$PASSWORD_FILE"
-    chown mosquitto:mosquitto "$PASSWORD_FILE"
-    echo "[mosquitto-config] starting broker"
+    set -e
+
+    echo "Creating Mosquitto password file..."
+
+    rm -f /mosquitto/config/passwordfile
+
+    mosquitto_passwd -b -c /mosquitto/config/passwordfile "$MQTT_DEVICE_USERNAME" "$MQTT_DEVICE_PASSWORD"
+    mosquitto_passwd -b /mosquitto/config/passwordfile "$MQTT_INGESTION_USERNAME" "$MQTT_INGESTION_PASSWORD"
+
+    chmod 600 /mosquitto/config/passwordfile
+
+    echo "Starting Mosquitto broker..."
+
     exec mosquitto -c /mosquitto/config/mosquitto.conf
