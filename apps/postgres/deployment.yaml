@@ -98,7 +98,7 @@ spec:
 
           volumeMounts:
             - name: postgres-storage
-              mountPath: /var/lib/postgresql/data
+              mountPath: /var/lib/postgresql/18/data
 
             - name: postgres-init-script
               mountPath: /docker-entrypoint-initdb.d/create-databases.sh

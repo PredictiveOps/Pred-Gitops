@@ -108,22 +108,30 @@ spec:
             - name: mosquitto-log
               mountPath: /mosquitto/log
 
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - /bin/sh
+          #       - -c
+          #       - >
+          #         mosquitto_sub
+          #         -h localhost
+          #         -p 8883
+          #         --cafile /mosquitto/certs/ca.crt
+          #         -u "$MQTT_INGESTION_USERNAME"
+          #         -P "$MQTT_INGESTION_PASSWORD"
+          #         -t '$SYS/broker/version'
+          #         -C 1
+          #         -W 5
+          #         >/dev/null 2>&1
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   failureThreshold: 5
+
           readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - >
-                  mosquitto_sub
-                  -h localhost
-                  -p 8883
-                  --cafile /mosquitto/certs/ca.crt
-                  -u "$MQTT_INGESTION_USERNAME"
-                  -P "$MQTT_INGESTION_PASSWORD"
-                  -t '$SYS/broker/version'
-                  -C 1
-                  -W 5
-                  >/dev/null 2>&1
+            tcpSocket:
+              port: 8883
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5

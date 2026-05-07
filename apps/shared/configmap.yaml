@@ -48,6 +48,9 @@ data:
   ML_KAFKA_GROUP_ID: "ml-service"
   ML_KAFKA_OFFSET_RESET: "latest"
 
+  # KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/predictive-maintenance/protocol/openid-connect/certs"
+  KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/prod-maintenance/protocol/openid-connect/certs"
+  POLL_INTERVAL: "30"
 ---
 # -----------------------------------------------------------------------------
 # Keycloak config (non-sensitive)

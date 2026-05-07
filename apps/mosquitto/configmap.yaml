@@ -82,7 +82,7 @@ data:
     use_identity_as_username false
 
     allow_anonymous false
-    password_file /mosquitto/config/passwordfile
+    password_file /mosquitto/data/passwordfile
 
     persistence true
     persistence_location /mosquitto/data/
@@ -99,12 +99,13 @@ data:
 
     echo "Creating Mosquitto password file..."
 
-    rm -f /mosquitto/config/passwordfile
+    rm -f /mosquitto/data/passwordfile
 
-    mosquitto_passwd -b -c /mosquitto/config/passwordfile "$MQTT_DEVICE_USERNAME" "$MQTT_DEVICE_PASSWORD"
-    mosquitto_passwd -b /mosquitto/config/passwordfile "$MQTT_INGESTION_USERNAME" "$MQTT_INGESTION_PASSWORD"
+    mosquitto_passwd -b -c /mosquitto/data/passwordfile "$MQTT_DEVICE_USERNAME" "$MQTT_DEVICE_PASSWORD"
+    mosquitto_passwd -b /mosquitto/data/passwordfile "$MQTT_INGESTION_USERNAME" "$MQTT_INGESTION_PASSWORD"
 
-    chmod 600 /mosquitto/config/passwordfile
+    chown mosquitto:mosquitto /mosquitto/data/passwordfile
+    chmod 600 /mosquitto/data/passwordfile
 
     echo "Starting Mosquitto broker..."
 
