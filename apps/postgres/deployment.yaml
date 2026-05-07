@@ -31,7 +31,7 @@ spec:
               value: "notifications,events,ingestion,keycloak"
           volumeMounts:
             - name: postgres-data
-              mountPath: /var/lib/postgresql/data
+              mountPath: /var/lib/postgresql/18/data
             - name: init-script
               mountPath: /docker-entrypoint-initdb.d
           livenessProbe:

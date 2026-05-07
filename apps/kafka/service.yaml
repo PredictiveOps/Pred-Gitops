@@ -7,7 +7,26 @@ spec:
   selector:
     app: kafka
   ports:
-    - port: 9092
+    - name: broker
+      port: 9092
       targetPort: 9092
       protocol: TCP
+    - name: controller
+      port: 9093
+      targetPort: 9093
+      protocol: TCP
   type: ClusterIP
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: kafka
+#   namespace: pred
+# spec:
+#   selector:
+#     app: kafka
+#   ports:
+#     - port: 9092
+#       targetPort: 9092
+#       protocol: TCP
+#   type: ClusterIP
