@@ -1,0 +1,298 @@
+---
+# =============================================================================
+# Shared ConfigMaps — pred namespace
+# Non-sensitive configuration referenced by deployments.
+# All values are plain strings (no base64 needed in ConfigMaps).
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Global cluster-wide config
+# Shared by multiple services — URLs, topic names, ports.
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-config
+  namespace: pred
+data:
+  # --- Kafka ---
+  KAFKA_BROKERS: "kafka:9092"
+  KAFKA_TOPIC: "device-events"
+
+  # --- Redis ---
+  REDIS_ADDR: "redis:6379"
+
+  # --- MQTT (ingestion-service) ---
+  MQTT_BROKER: "ssl://mosquitto:8883"
+  MQTT_CLIENT_ID: "ingestion-service"
+  MQTT_TOPIC: "devices/+/data"
+  MQTT_CA_CERT: "/mosquitto/certs/ca.crt"
+  MQTT_DEVICE_REGISTRATION_TOPIC: "devices/+/registration"
+  MQTT_DEVICE_REGISTRATION_RESPONSE_TOPIC: "devices/%d/registration/response"
+
+  # --- Ingestion service ---
+  PORT: "8081"
+
+  # --- Event processing service ---
+  EVENT_HTTP_PORT: "8080"
+  EVENT_KAFKA_GROUP_ID: "event-processing-service"
+
+  # --- Notifications service ---
+  NOTIFICATIONS_KAFKA_TOPIC: "notifications"
+  NOTIFICATIONS_KAFKA_GROUP_ID: "notifications-service"
+
+  # --- ML service ---
+  ML_PORT: "8003"
+  ML_LOG_LEVEL: "info"
+  ML_FEATURES_TOPIC: "ml-features"
+  ML_KAFKA_GROUP_ID: "ml-service"
+  ML_KAFKA_OFFSET_RESET: "latest"
+
+  # KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/predictive-maintenance/protocol/openid-connect/certs"
+  KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/prod-maintenance/protocol/openid-connect/certs"
+  POLL_INTERVAL: "30"
+---
+# -----------------------------------------------------------------------------
+# Keycloak config (non-sensitive)
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: pred
+data:
+  KC_DB: "postgres"
+  KC_DB_URL: "jdbc:postgresql://postgres:5432/keycloak"
+  # Internal cluster hostname — Kong and web-frontend reach Keycloak here.
+  # For external-facing Keycloak (e.g. via Ingress), update KC_HOSTNAME to
+  # your actual domain name.
+  KC_HOSTNAME: "keycloak"
+  KC_HOSTNAME_PORT: "8080"
+  # "edge" means Keycloak trusts a reverse proxy (Kong/Ingress) for TLS termination
+  KC_PROXY: "edge"
+  KC_REALM: "prod-maintenance"
+  KC_CLIENT_ID: "web-frontend"
+  # KC_REDIRECT_URI: "http://localhost:3000/api/auth/callback/keycloak"
+  # KC_WEB_ORIGIN: "http://localhost:3000"
+  KC_REDIRECT_URI: "http://pred.nsanjula.xyz/api/auth/callback/keycloak"
+  KC_WEB_ORIGIN: "http://pred.nsanjula.xyz"
+  KEYCLOAK_URL: "http://keycloak:8080"
+
+---
+# -----------------------------------------------------------------------------
+# Web frontend config (non-sensitive)
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-frontend-config
+  namespace: pred
+data:
+  NODE_ENV: "production"
+  # Update NEXTAUTH_URL to your actual external domain once Ingress is set up
+  # NEXTAUTH_URL: "http://localhost:3000"
+  NEXTAUTH_URL: "http://pred.nsanjula.xyz"
+  KEYCLOAK_URL: "http://keycloak:8080"
+  KEYCLOAK_REALM: "prod-maintenance"
+  KEYCLOAK_CLIENT_ID: "web-frontend"
+
+---
+# -----------------------------------------------------------------------------
+# Kong declarative config (kong.yml)
+# Mounted into kong-jwks-sync as /etc/kong/kong.yml
+# The __RSA_PUBLIC_KEY__ placeholder is replaced at runtime by kong-jwks-sync.
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-config
+  namespace: pred
+data:
+  kong.yml: |
+    _format_version: "3.0"
+
+    upstreams:
+      - name: event-processing-upstream
+        targets:
+          - target: event-processing-service:8080
+            weight: 100
+        healthchecks:
+          active:
+            type: http
+            http_path: /health
+            timeout: 3
+            concurrency: 10
+            healthy:
+              interval: 5
+              successes: 2
+            unhealthy:
+              interval: 5
+              tcp_failures: 2
+              http_failures: 2
+              timeouts: 2
+
+      - name: ingestion-upstream
+        targets:
+          - target: ingestion-service:8081
+            weight: 100
+        healthchecks:
+          active:
+            type: http
+            http_path: /health
+            timeout: 3
+            concurrency: 10
+            healthy:
+              interval: 5
+              successes: 2
+            unhealthy:
+              interval: 5
+              tcp_failures: 2
+              http_failures: 2
+              timeouts: 2
+
+    services:
+      - name: event-processing
+        host: event-processing-upstream
+        path: /tenants/default/events
+        routes:
+          - name: events-route
+            paths:
+              - /api/events
+            strip_path: true
+            plugins:
+              - name: jwt
+                config:
+                  key_claim_name: iss
+                  claims_to_verify:
+                    - exp
+
+      - name: ingestion
+        host: ingestion-upstream
+        routes:
+          - name: ingestion-route
+            paths:
+              - /api/ingest
+            strip_path: true
+            plugins:
+              - name: jwt
+                config:
+                  key_claim_name: iss
+                  claims_to_verify:
+                    - exp
+
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "http://localhost:3000"
+            - "http://localhost:8000"
+          methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          headers:
+            - Accept
+            - Accept-Version
+            - Content-Length
+            - Content-MD5
+            - Content-Type
+            - Date
+            - Authorization
+          exposed_headers:
+            - Authorization
+          credentials: true
+          max_age: 3600
+
+      - name: rate-limiting
+        config:
+          minute: 600
+          policy: local
+
+      - name: request-size-limiting
+        config:
+          allowed_payload_size: 10
+
+    consumers:
+      - username: keycloak-consumer
+
+    jwt_secrets:
+      - consumer: keycloak-consumer
+        key: "http://keycloak:8080/realms/prod-maintenance"
+        algorithm: RS256
+        # Replaced at runtime by kong-jwks-sync sidecar
+        rsa_public_key: |
+          __RSA_PUBLIC_KEY__
+
+---
+# -----------------------------------------------------------------------------
+# Postgres init script config
+# Runs on first startup to create all required databases.
+# Mirrors the behaviour of ./postgres/init in docker-compose.
+# -----------------------------------------------------------------------------
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: postgres-init-config
+#   namespace: pred
+# data:
+#   create-databases.sh: |
+#     #!/bin/bash
+#     set -e
+
+#     # Creates multiple databases in a single Postgres instance.
+#     # POSTGRES_MULTIPLE_DATABASES is a comma-separated list, e.g.:
+#     #   notifications,events,ingestion,keycloak,predictions
+#     create_database() {
+#       local database=$1
+#       echo "Creating database: $database"
+#       psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+#         CREATE DATABASE $database;
+#         GRANT ALL PRIVILEGES ON DATABASE $database TO $POSTGRES_USER;
+#     EOSQL
+#     }
+
+#     if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
+#       echo "Multiple databases requested: $POSTGRES_MULTIPLE_DATABASES"
+#       for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
+#         create_database "$db"
+#       done
+#       echo "All databases created."
+#     fi
+
+# ---
+# -----------------------------------------------------------------------------
+# Postgres init script config
+# Runs on first startup to create all required databases.
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-config
+  namespace: pred
+data:
+  create-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Creating required application databases..."
+
+    for db in $(echo "$POSTGRES_MULTIPLE_DATABASES" | tr ',' ' '); do
+      echo "Checking database: $db"
+
+      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        SELECT 'CREATE DATABASE $db'
+        WHERE NOT EXISTS (
+          SELECT FROM pg_database WHERE datname = '$db'
+        )\gexec
+    EOSQL
+
+      echo "Granting privileges on database: $db"
+
+      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        GRANT ALL PRIVILEGES ON DATABASE $db TO $POSTGRES_USER;
+    EOSQL
+    done
+
+    echo "Postgres database initialization completed."

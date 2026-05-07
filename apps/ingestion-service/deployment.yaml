@@ -1,3 +1,61 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: ingestion-service
+#   namespace: pred
+#   labels:
+#     app: ingestion-service
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: ingestion-service
+#   template:
+#     metadata:
+#       labels:
+#         app: ingestion-service
+#     spec:
+#       containers:
+#         - name: ingestion-service
+#           image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ingestion-service:latest
+#           ports:
+#             - containerPort: 8081
+#           env:
+#             - name: PORT
+#               value: "8081"
+#             - name: DATABASE_URL
+#               value: "postgresql://postgres:postgres@postgres:5432/ingestion"
+#             - name: KAFKA_BROKERS
+#               value: "kafka:9092"
+#             - name: KAFKA_TOPIC
+#               value: "device-events"
+#             - name: MQTT_BROKER
+#               value: "ssl://mosquitto:8883"
+#             - name: MQTT_CLIENT_ID
+#               value: "ingestion-service"
+#             - name: MQTT_TOPIC
+#               value: "devices/+/data"
+#             - name: MQTT_USERNAME
+#               value: "pred-ingestion"
+#             - name: MQTT_PASSWORD
+#               value: "dev-ingestion-password"
+#             - name: MQTT_CA_CERT
+#               value: "/mosquitto/certs/ca.crt"
+#           volumeMounts:
+#             - name: mosquitto-certs
+#               mountPath: /mosquitto/certs
+#               readOnly: true
+#           livenessProbe:
+#             httpGet:
+#               path: /health
+#               port: 8081
+#             initialDelaySeconds: 15
+#             periodSeconds: 10
+#       volumes:
+#         - name: mosquitto-certs
+#           secret:
+#             secretName: mosquitto-certs
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,41 +75,132 @@ spec:
     spec:
       containers:
         - name: ingestion-service
-          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ingestion-service:latest
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ingestion-service:v1
+          imagePullPolicy: IfNotPresent
+
           ports:
-            - containerPort: 8081
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+
           env:
+            # Service port
             - name: PORT
-              value: "8081"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: PORT
+
+            # Database
             - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@postgres:5432/ingestion"
+              valueFrom:
+                secretKeyRef:
+                  name: ingestion-db-secret
+                  key: DATABASE_URL
+
+            # Kafka
             - name: KAFKA_BROKERS
-              value: "kafka:9092"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: KAFKA_BROKERS
+
             - name: KAFKA_TOPIC
-              value: "device-events"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: KAFKA_TOPIC
+
+            # MQTT
             - name: MQTT_BROKER
-              value: "ssl://mosquitto:8883"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: MQTT_BROKER
+
             - name: MQTT_CLIENT_ID
-              value: "ingestion-service"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: MQTT_CLIENT_ID
+
             - name: MQTT_TOPIC
-              value: "devices/+/data"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: MQTT_TOPIC
+
             - name: MQTT_USERNAME
-              value: "pred-ingestion"
+              valueFrom:
+                secretKeyRef:
+                  name: mosquitto-secret
+                  key: MQTT_INGESTION_USERNAME
+
             - name: MQTT_PASSWORD
-              value: "dev-ingestion-password"
+              valueFrom:
+                secretKeyRef:
+                  name: mosquitto-secret
+                  key: MQTT_INGESTION_PASSWORD
+
             - name: MQTT_CA_CERT
-              value: "/mosquitto/certs/ca.crt"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: MQTT_CA_CERT
+
+            - name: MQTT_DEVICE_REGISTRATION_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: MQTT_DEVICE_REGISTRATION_TOPIC
+
+            - name: MQTT_DEVICE_REGISTRATION_RESPONSE_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: MQTT_DEVICE_REGISTRATION_RESPONSE_TOPIC
+
+            # Redis
+            - name: REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: REDIS_ADDR
+
           volumeMounts:
-            - name: mosquitto-certs
+            - name: mosquitto-tls
               mountPath: /mosquitto/certs
               readOnly: true
-          livenessProbe:
+
+          readinessProbe:
             httpGet:
               path: /health
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "512Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+              ephemeral-storage: "1Gi"
+
       volumes:
-        - name: mosquitto-certs
+        - name: mosquitto-tls
           secret:
-            secretName: mosquitto-certs
+            secretName: mosquitto-tls-secret

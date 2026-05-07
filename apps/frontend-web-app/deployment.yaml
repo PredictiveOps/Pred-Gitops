@@ -1,46 +1,144 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: frontend-web-app
+#   namespace: default
+#   labels:
+#     app: frontend-web-app
+# spec:
+#   replicas: 3
+#   selector:
+#     matchLabels:
+#       app: frontend-web-app
+#   template:
+#     metadata:
+#       labels:
+#         app: frontend-web-app
+#     spec:
+#       containers:
+#         - name: frontend-web-app
+#           image: frontend-web-app:latest
+#           imagePullPolicy: Always
+#           ports:
+#             - containerPort: 3000
+#               name: http
+#           env:
+#             - name: PORT
+#               value: "3000"
+#           resources:
+#             requests:
+#               cpu: 100m
+#               memory: 256Mi
+#             limits:
+#               cpu: 500m
+#               memory: 512Mi
+#           livenessProbe:
+#             httpGet:
+#               path: /
+#               port: 3000
+#             initialDelaySeconds: 10
+#             periodSeconds: 10
+#           readinessProbe:
+#             httpGet:
+#               path: /
+#               port: 3000
+#             initialDelaySeconds: 5
+#             periodSeconds: 5
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-web-app
-  namespace: default
+  name: web-frontend
+  namespace: pred
   labels:
-    app: frontend-web-app
+    app: web-frontend
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: frontend-web-app
+      app: web-frontend
   template:
     metadata:
       labels:
-        app: frontend-web-app
+        app: web-frontend
     spec:
       containers:
-        - name: frontend-web-app
-          image: frontend-web-app:latest
-          imagePullPolicy: Always
+        - name: web-frontend
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/web-frontend:v1
+          imagePullPolicy: IfNotPresent
+
           ports:
-            - containerPort: 3000
-              name: http
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
           env:
-            - name: PORT
-              value: "3000"
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: NODE_ENV
+
+            - name: NEXTAUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: NEXTAUTH_URL
+
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: web-frontend-secret
+                  key: NEXTAUTH_SECRET
+
+            - name: KEYCLOAK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: KEYCLOAK_URL
+
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: KEYCLOAK_REALM
+
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: KEYCLOAK_CLIENT_ID
+
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: web-frontend-secret
+                  key: KEYCLOAK_CLIENT_SECRET
+
           readinessProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+              ephemeral-storage: "2Gi"

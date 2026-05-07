@@ -1,10 +1,10 @@
 # apiVersion: v1
 # kind: Service
 # metadata:
-#   name: notification-service
+#   name: authentication-service
 #   namespace: default
 #   labels:
-#     app: notification-service
+#     app: authentication-service
 # spec:
 #   type: ClusterIP
 #   ports:
@@ -13,19 +13,19 @@
 #       protocol: TCP
 #       name: http
 #   selector:
-#     app: notification-service
+#     app: authentication-service
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: notifications-service
+  name: keycloak
   namespace: pred
   labels:
-    app: notifications-service
+    app: keycloak
 spec:
   type: ClusterIP
   selector:
-    app: notifications-service
+    app: keycloak
   ports:
     - name: http
       port: 8080

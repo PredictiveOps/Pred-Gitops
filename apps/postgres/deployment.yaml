@@ -1,3 +1,64 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: postgres
+#   namespace: pred
+#   labels:
+#     app: postgres
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: postgres
+#   template:
+#     metadata:
+#       labels:
+#         app: postgres
+#     spec:
+#       containers:
+#         - name: postgres
+#           image: postgres:18
+#           ports:
+#             - containerPort: 5432
+#           env:
+#             - name: POSTGRES_USER
+#               value: "postgres"
+#             - name: POSTGRES_PASSWORD
+#               value: "postgres"
+#             - name: POSTGRES_DB
+#               value: "postgres"
+#             - name: POSTGRES_MULTIPLE_DATABASES
+#               value: "notifications,events,ingestion,keycloak"
+#           volumeMounts:
+#             - name: postgres-data
+#               mountPath: /var/lib/postgresql/18/data
+#             - name: init-script
+#               mountPath: /docker-entrypoint-initdb.d
+#           livenessProbe:
+#             exec:
+#               command:
+#                 - pg_isready
+#                 - -U
+#                 - postgres
+#             initialDelaySeconds: 30
+#             periodSeconds: 10
+#           readinessProbe:
+#             exec:
+#               command:
+#                 - pg_isready
+#                 - -U
+#                 - postgres
+#             initialDelaySeconds: 5
+#             periodSeconds: 5
+#       volumes:
+#         - name: postgres-data
+#           persistentVolumeClaim:
+#             claimName: postgres-pvc
+#         - name: init-script
+#           configMap:
+#             name: postgres-init-config
+#             defaultMode: 0755
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,6 +68,8 @@ metadata:
     app: postgres
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: postgres
@@ -15,46 +78,75 @@ spec:
       labels:
         app: postgres
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
         - name: postgres
           image: postgres:18
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 5432
+            - name: postgres
+              containerPort: 5432
+
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+
           env:
-            - name: POSTGRES_USER
-              value: "postgres"
-            - name: POSTGRES_PASSWORD
-              value: "postgres"
-            - name: POSTGRES_DB
-              value: "postgres"
             - name: POSTGRES_MULTIPLE_DATABASES
-              value: "notifications,events,ingestion,keycloak"
+              value: "notifications,events,ingestion,keycloak,predictions"
+
           volumeMounts:
-            - name: postgres-data
-              mountPath: /var/lib/postgresql/data
-            - name: init-script
-              mountPath: /docker-entrypoint-initdb.d
-          livenessProbe:
-            exec:
-              command:
-                - pg_isready
-                - -U
-                - postgres
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/18/data
+
+            - name: postgres-init-script
+              mountPath: /docker-entrypoint-initdb.d/create-databases.sh
+              subPath: create-databases.sh
+              readOnly: true
+
           readinessProbe:
             exec:
               command:
                 - pg_isready
                 - -U
                 - postgres
-            initialDelaySeconds: 5
+                - -d
+                - postgres
+            initialDelaySeconds: 10
             periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 10
+
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "2Gi"
+
       volumes:
-        - name: postgres-data
+        - name: postgres-storage
           persistentVolumeClaim:
             claimName: postgres-pvc
-        - name: init-script
+
+        - name: postgres-init-script
           configMap:
             name: postgres-init-config
             defaultMode: 0755

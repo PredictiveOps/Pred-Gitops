@@ -1,3 +1,57 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: mosquitto
+#   namespace: pred
+#   labels:
+#     app: mosquitto
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: mosquitto
+#   template:
+#     metadata:
+#       labels:
+#         app: mosquitto
+#     spec:
+#       containers:
+#         - name: mosquitto
+#           image: eclipse-mosquitto:2
+#           ports:
+#             - containerPort: 8883
+#           env:
+#             - name: MQTT_DEVICE_USERNAME
+#               value: "pred-device"
+#             - name: MQTT_DEVICE_PASSWORD
+#               value: "dev-device-password"
+#             - name: MQTT_INGESTION_USERNAME
+#               value: "pred-ingestion"
+#             - name: MQTT_INGESTION_PASSWORD
+#               value: "dev-ingestion-password"
+#           volumeMounts:
+#             - name: mosquitto-config
+#               mountPath: /mosquitto/config/mosquitto.conf
+#               subPath: mosquitto.conf
+#             - name: mosquitto-config
+#               mountPath: /mosquitto/config/acl
+#               subPath: acl
+#             - name: mosquitto-config
+#               mountPath: /mosquitto/config/entrypoint.sh
+#               subPath: entrypoint.sh
+#             - name: mosquitto-certs
+#               mountPath: /mosquitto/config/certs
+#               readOnly: true
+#           command: ["/bin/sh", "/mosquitto/config/entrypoint.sh"]
+#       volumes:
+#         - name: mosquitto-config
+#           configMap:
+#             name: mosquitto-config
+#             defaultMode: 0755
+#         - name: mosquitto-certs
+#           secret:
+#             secretName: mosquitto-certs
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,36 +72,101 @@ spec:
       containers:
         - name: mosquitto
           image: eclipse-mosquitto:2
+          imagePullPolicy: IfNotPresent
+
           ports:
-            - containerPort: 8883
-          env:
-            - name: MQTT_DEVICE_USERNAME
-              value: "pred-device"
-            - name: MQTT_DEVICE_PASSWORD
-              value: "dev-device-password"
-            - name: MQTT_INGESTION_USERNAME
-              value: "pred-ingestion"
-            - name: MQTT_INGESTION_PASSWORD
-              value: "dev-ingestion-password"
+            - name: mqtts
+              containerPort: 8883
+              protocol: TCP
+
+          envFrom:
+            - secretRef:
+                name: mosquitto-secret
+
+          command:
+            - /bin/sh
+            - /mosquitto/config/entrypoint.sh
+
           volumeMounts:
             - name: mosquitto-config
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
-            - name: mosquitto-config
-              mountPath: /mosquitto/config/acl
-              subPath: acl
+              readOnly: true
+
             - name: mosquitto-config
               mountPath: /mosquitto/config/entrypoint.sh
               subPath: entrypoint.sh
-            - name: mosquitto-certs
-              mountPath: /mosquitto/config/certs
               readOnly: true
-          command: ["/bin/sh", "/mosquitto/config/entrypoint.sh"]
+
+            - name: mosquitto-tls
+              mountPath: /mosquitto/certs
+              readOnly: true
+
+            - name: mosquitto-data
+              mountPath: /mosquitto/data
+
+            - name: mosquitto-log
+              mountPath: /mosquitto/log
+
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - /bin/sh
+          #       - -c
+          #       - >
+          #         mosquitto_sub
+          #         -h localhost
+          #         -p 8883
+          #         --cafile /mosquitto/certs/ca.crt
+          #         -u "$MQTT_INGESTION_USERNAME"
+          #         -P "$MQTT_INGESTION_PASSWORD"
+          #         -t '$SYS/broker/version'
+          #         -C 1
+          #         -W 5
+          #         >/dev/null 2>&1
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   failureThreshold: 5
+
+          readinessProbe:
+            tcpSocket:
+              port: 8883
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          livenessProbe:
+            tcpSocket:
+              port: 8883
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "512Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+              ephemeral-storage: "1Gi"
+
       volumes:
         - name: mosquitto-config
           configMap:
             name: mosquitto-config
             defaultMode: 0755
-        - name: mosquitto-certs
+
+        - name: mosquitto-tls
           secret:
-            secretName: mosquitto-certs
+            secretName: mosquitto-tls-secret
+
+        - name: mosquitto-data
+          emptyDir: {}
+
+        - name: mosquitto-log
+          emptyDir: {}

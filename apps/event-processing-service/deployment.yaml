@@ -1,3 +1,43 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: event-processing-service
+#   namespace: pred
+#   labels:
+#     app: event-processing-service
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: event-processing-service
+#   template:
+#     metadata:
+#       labels:
+#         app: event-processing-service
+#     spec:
+#       containers:
+#         - name: event-processing-service
+#           image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/event-processing-service:latest
+#           ports:
+#             - containerPort: 8080
+#           env:
+#             - name: KAFKA_BROKERS
+#               value: "kafka:9092"
+#             - name: KAFKA_TOPIC
+#               value: "device-events"
+#             - name: KAFKA_GROUP_ID
+#               value: "event-processing-service"
+#             - name: DATABASE_URL
+#               value: "postgresql://postgres:postgres@postgres:5432/events"
+#             - name: HTTP_PORT
+#               value: "8080"
+#           livenessProbe:
+#             httpGet:
+#               path: /health
+#               port: 8080
+#             initialDelaySeconds: 15
+#             periodSeconds: 10
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,23 +57,72 @@ spec:
     spec:
       containers:
         - name: event-processing-service
-          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/event-processing-service:latest
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/event-processing-service:v1
+          imagePullPolicy: IfNotPresent
+
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
           env:
+            # Kafka
             - name: KAFKA_BROKERS
-              value: "kafka:9092"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: KAFKA_BROKERS
+
             - name: KAFKA_TOPIC
-              value: "device-events"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: KAFKA_TOPIC
+
             - name: KAFKA_GROUP_ID
-              value: "event-processing-service"
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: EVENT_KAFKA_GROUP_ID
+
+            # Database
             - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@postgres:5432/events"
+              valueFrom:
+                secretKeyRef:
+                  name: events-db-secret
+                  key: DATABASE_URL
+
+            # HTTP server
             - name: HTTP_PORT
-              value: "8080"
-          livenessProbe:
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: EVENT_HTTP_PORT
+
+          readinessProbe:
             httpGet:
               path: /health
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+              ephemeral-storage: "512Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+              ephemeral-storage: "1Gi"
