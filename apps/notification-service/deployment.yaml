@@ -94,12 +94,12 @@ spec:
                   name: notifications-db-secret
                   key: DATABASE_URL
 
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-              ephemeral-storage: "512Mi"
-            limits:
-              cpu: "250m"
-              memory: "256Mi"
-              ephemeral-storage: "1Gi"
+          # resources:
+          #   requests:
+          #     cpu: "100m"
+          #     memory: "128Mi"
+          #     ephemeral-storage: "512Mi"
+          #   limits:
+          #     cpu: "250m"
+          #     memory: "256Mi"
+          #     ephemeral-storage: "1Gi"

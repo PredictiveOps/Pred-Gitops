@@ -49,12 +49,12 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 5
 
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-              ephemeral-storage: "512Mi"
-            limits:
-              cpu: "250m"
-              memory: "256Mi"
-              ephemeral-storage: "1Gi"
+          # resources:
+          #   requests:
+          #     cpu: "100m"
+          #     memory: "128Mi"
+          #     ephemeral-storage: "512Mi"
+          #   limits:
+          #     cpu: "250m"
+          #     memory: "256Mi"
+          #     ephemeral-storage: "1Gi"

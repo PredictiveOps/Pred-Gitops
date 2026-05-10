@@ -159,15 +159,15 @@ spec:
               subPath: kong.yml
               readOnly: true
 
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-              ephemeral-storage: "256Mi"
-            limits:
-              cpu: "250m"
-              memory: "256Mi"
-              ephemeral-storage: "512Mi"
+          # resources:
+          #   requests:
+          #     cpu: "100m"
+          #     memory: "128Mi"
+          #     ephemeral-storage: "256Mi"
+          #   limits:
+          #     cpu: "250m"
+          #     memory: "256Mi"
+          #     ephemeral-storage: "512Mi"
 
       volumes:
         - name: kong-config
