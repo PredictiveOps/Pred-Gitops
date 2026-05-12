@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: ml-service
-          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ai-ml:9a1fc0de89ec356ecd187b9f7c453f4ca7c38ff5
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/ai-ml:72b03e93381b78ecf63afb7d32ed45c56c5209bd
           imagePullPolicy: IfNotPresent
 
           ports:
