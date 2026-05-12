@@ -62,6 +62,12 @@ spec:
                   name: web-frontend-config
                   key: KEYCLOAK_CLIENT_ID
 
+            - name: KEYCLOAK_PUBLIC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: KEYCLOAK_PUBLIC_URL
+
             - name: KEYCLOAK_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
