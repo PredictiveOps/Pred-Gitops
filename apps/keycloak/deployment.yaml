@@ -65,6 +65,15 @@ spec:
             - name: KC_METRICS_ENABLED
               value: "true"
 
+            - name: KC_HTTP_ENABLED
+              value: "true"
+
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+
+            - name: KC_PROXY
+              value: "edge"
+
           readinessProbe:
             tcpSocket:
               port: 8080

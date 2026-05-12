@@ -80,6 +80,7 @@ data:
   KEYCLOAK_URL: "http://pred.nsanjula.xyz"
   # KEYCLOAK_URL: "http://keycloak:8080"
   KC_LOG_LEVEL: "INFO"
+  KC_PROXY: edge
 
 ---
 # -----------------------------------------------------------------------------
