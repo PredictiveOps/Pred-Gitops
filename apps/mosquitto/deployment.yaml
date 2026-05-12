@@ -75,21 +75,21 @@ spec:
           #   timeoutSeconds: 5
           #   failureThreshold: 5
 
-          readinessProbe:
-            tcpSocket:
-              port: 8883
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 5
+          # readinessProbe:
+          #   tcpSocket:
+          #     port: 8883
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   failureThreshold: 5
 
-          livenessProbe:
-            tcpSocket:
-              port: 8883
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 5
+          # livenessProbe:
+          #   tcpSocket:
+          #     port: 8883
+          #   initialDelaySeconds: 20
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   failureThreshold: 5
 
           # resources:
           #   requests:
