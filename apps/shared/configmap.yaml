@@ -63,20 +63,15 @@ metadata:
 data:
   KC_DB: "postgres"
   KC_DB_URL: "jdbc:postgresql://postgres:5432/keycloak"
-  # Internal cluster hostname — Kong and web-frontend reach Keycloak here.
-  # For external-facing Keycloak (e.g. via Ingress), update KC_HOSTNAME to
-  # your actual domain name.
-  KC_HOSTNAME: "keycloak"
-  KC_HOSTNAME_PORT: "8080"
-  # "edge" means Keycloak trusts a reverse proxy (Kong/Ingress) for TLS termination
-  KC_PROXY: "edge"
+  KC_HOSTNAME: "http://pred.nsanjula.xyz"
+  KC_PROXY_HEADERS: "xforwarded"
+  KC_HTTP_ENABLED: "true"
   KC_REALM: "prod-maintenance"
   KC_CLIENT_ID: "web-frontend"
-  # KC_REDIRECT_URI: "http://localhost:3000/api/auth/callback/keycloak"
-  # KC_WEB_ORIGIN: "http://localhost:3000"
   KC_REDIRECT_URI: "http://pred.nsanjula.xyz/api/auth/callback/keycloak"
   KC_WEB_ORIGIN: "http://pred.nsanjula.xyz"
   KEYCLOAK_URL: "http://keycloak:8080"
+  KC_LOG_LEVEL: "INFO"
 
 ---
 # -----------------------------------------------------------------------------
