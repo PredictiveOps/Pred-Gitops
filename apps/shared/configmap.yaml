@@ -63,13 +63,7 @@ metadata:
 data:
   KC_DB: "postgres"
   KC_DB_URL: "jdbc:postgresql://postgres:5432/keycloak"
-  # KC_HOSTNAME: "http://pred.nsanjula.xyz"
-  KC_HOSTNAME: "pred.nsanjula.xyz"
-  # KC_HOSTNAME: "34.158.33.239"
-  # KC_HOSTNAME_PORT: "8080"
-  # KC_HOSTNAME_STRICT: "false"
-  # KC_PROXY_HEADERS: "xforwarded"
-  # KC_HTTP_ENABLED: "true"
+  KC_HOSTNAME: "keycloak.nsanjula.xyz"
   KC_HOSTNAME_STRICT: "false"
   KC_PROXY_HEADERS: "xforwarded"
   KC_HTTP_ENABLED: "true"
@@ -77,8 +71,6 @@ data:
   KC_CLIENT_ID: "web-frontend"
   KC_REDIRECT_URI: "http://pred.nsanjula.xyz/api/auth/callback/keycloak"
   KC_WEB_ORIGIN: "http://pred.nsanjula.xyz"
-  KEYCLOAK_URL: "http://pred.nsanjula.xyz"
-  # KEYCLOAK_URL: "http://keycloak:8080"
   KC_LOG_LEVEL: "INFO"
   KC_PROXY: edge
 
@@ -93,13 +85,9 @@ metadata:
   namespace: pred
 data:
   NODE_ENV: "production"
-  # Update NEXTAUTH_URL to your actual external domain once Ingress is set up
-  # NEXTAUTH_URL: "http://localhost:3000"
   NEXTAUTH_URL: "http://pred.nsanjula.xyz"
   KEYCLOAK_URL: "http://keycloak:8080"
-  # KEYCLOAK_PUBLIC_URL: "http://pred.nsanjula.xyz"
-  KEYCLOAK_PUBLIC_URL: "http://34.158.33.239:8080"
-  # KEYCLOAK_URL: "http://keycloak:8080"
+  KEYCLOAK_PUBLIC_URL: "http://keycloak.nsanjula.xyz:8080"
   KEYCLOAK_REALM: "prod-maintenance"
   KEYCLOAK_CLIENT_ID: "web-frontend"
 
