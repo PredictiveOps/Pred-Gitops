@@ -95,7 +95,7 @@ data:
   # Update NEXTAUTH_URL to your actual external domain once Ingress is set up
   # NEXTAUTH_URL: "http://localhost:3000"
   NEXTAUTH_URL: "http://pred.nsanjula.xyz"
-  KEYCLOAK_URL: "http://pred.nsanjula.xyz"
+  KEYCLOAK_URL: "http://keycloak:8080"
   # KEYCLOAK_PUBLIC_URL: "http://pred.nsanjula.xyz"
   KEYCLOAK_PUBLIC_URL: "http://34.158.33.239:8080"
   # KEYCLOAK_URL: "http://keycloak:8080"
