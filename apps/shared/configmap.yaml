@@ -180,7 +180,7 @@ data:
         config:
           origins:
             - "http://localhost:3000"
-            - "http://localhost:8000"
+            - "http://pred.nsanjula.xyz"
           methods:
             - GET
             - POST
