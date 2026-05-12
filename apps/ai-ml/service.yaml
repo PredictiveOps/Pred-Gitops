@@ -28,6 +28,6 @@ spec:
     app: ml-service
   ports:
     - name: http
-      port: 8003
-      targetPort: 8003
+      port: 8084
+      targetPort: 8084
       protocol: TCP

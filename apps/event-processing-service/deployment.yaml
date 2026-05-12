@@ -62,7 +62,7 @@ spec:
 
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: 8082
               protocol: TCP
 
           env:
@@ -102,7 +102,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8082
             initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
@@ -111,7 +111,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 8082
             initialDelaySeconds: 30
             periodSeconds: 20
             timeoutSeconds: 5

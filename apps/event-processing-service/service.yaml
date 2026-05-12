@@ -25,6 +25,6 @@ spec:
     app: event-processing-service
   ports:
     - name: http
-      port: 8080
-      targetPort: 8080
+      port: 8082
+      targetPort: 8082
       protocol: TCP

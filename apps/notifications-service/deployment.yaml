@@ -67,6 +67,11 @@ spec:
           image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/notifications-service:v1
           imagePullPolicy: IfNotPresent
 
+          ports:
+            - name: http
+              containerPort: 8083
+              protocol: TCP
+
           env:
             # Kafka
             - name: KAFKA_BROKERS
