@@ -14,6 +14,14 @@ spec:
     - host: pred.nsanjula.xyz
       http:
         paths:
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: web-frontend
+                port:
+                  number: 3000
+
           - path: /api
             pathType: Prefix
             backend:
