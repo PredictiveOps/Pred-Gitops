@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: event-processing-service
-          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/event-processing-service:v1
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/event-processing-service:9a1fc0de89ec356ecd187b9f7c453f4ca7c38ff5
           imagePullPolicy: IfNotPresent
 
           ports:
