@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: web-frontend
-          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/web-frontend:123d2edaff3a6b6e63ad6c34743d624bf2834b4e
+          image: asia-southeast1-docker.pkg.dev/project-79fc9abe-eb97-46c9-b31/predictive-maintenance/web-frontend:4858c972bbc96865b4f7d81c731c4eb092fe20bb
           imagePullPolicy: IfNotPresent
 
           ports:
