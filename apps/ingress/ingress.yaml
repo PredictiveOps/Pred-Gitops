@@ -14,6 +14,29 @@ spec:
     - host: pred.nsanjula.xyz
       http:
         paths:
+          - path: /realms
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+
+          - path: /resources
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
           - path: /api/auth
             pathType: Prefix
             backend:
@@ -37,3 +60,52 @@ spec:
                 name: web-frontend
                 port:
                   number: 3000
+
+# paths:
+#   - path: /realms
+#     pathType: Prefix
+#     backend:
+#       service:
+#         name: keycloak
+#         port:
+#           number: 8080
+
+#   - path: /admin
+#     pathType: Prefix
+#     backend:
+#       service:
+#         name: keycloak
+#         port:
+#           number: 8080
+
+#   - path: /resources
+#     pathType: Prefix
+#     backend:
+#       service:
+#         name: keycloak
+#         port:
+#           number: 8080
+
+#   - path: /api/auth
+#     pathType: Prefix
+#     backend:
+#       service:
+#         name: web-frontend
+#         port:
+#           number: 3000
+
+#   - path: /api
+#     pathType: Prefix
+#     backend:
+#       service:
+#         name: kong
+#         port:
+#           number: 8000
+
+#   - path: /
+#     pathType: Prefix
+#     backend:
+#       service:
+#         name: web-frontend
+#         port:
+#           number: 3000
