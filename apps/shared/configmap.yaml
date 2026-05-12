@@ -96,6 +96,7 @@ data:
   # NEXTAUTH_URL: "http://localhost:3000"
   NEXTAUTH_URL: "http://pred.nsanjula.xyz"
   KEYCLOAK_URL: "http://pred.nsanjula.xyz"
+  KEYCLOAK_PUBLIC_URL: "http://pred.nsanjula.xyz"
   # KEYCLOAK_URL: "http://keycloak:8080"
   KEYCLOAK_REALM: "prod-maintenance"
   KEYCLOAK_CLIENT_ID: "web-frontend"
