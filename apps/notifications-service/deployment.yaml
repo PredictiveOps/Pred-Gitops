@@ -52,6 +52,26 @@ spec:
                   name: notifications-db-secret
                   key: DATABASE_URL
 
+            - name: KEYCLOAK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: KEYCLOAK_URL
+
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: web-frontend-config
+                  key: KEYCLOAK_REALM
+            - name: KEYCLOAK_CLIENT_ID
+              value: "notifications-service"
+
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: "dev-notifications-service-secret"
+
+            - name: FAILURE_THRESHOLD
+              value: "0.1"
+
           # resources:
           #   requests:
           #     cpu: "100m"
