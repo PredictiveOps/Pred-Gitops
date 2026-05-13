@@ -74,6 +74,9 @@ spec:
                   name: web-frontend-secret
                   key: KEYCLOAK_CLIENT_SECRET
 
+            - name: NEXT_PUBLIC_API_GATEWAY_URL
+              value: "https://kong.nsanjula.xyz"
+
           readinessProbe:
             httpGet:
               path: /
