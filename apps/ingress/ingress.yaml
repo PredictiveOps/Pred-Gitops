@@ -11,6 +11,17 @@ metadata:
 
 spec:
   rules:
+    - host: keycloak.nsanjula.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+
     - host: pred.nsanjula.xyz
       http:
         paths:
