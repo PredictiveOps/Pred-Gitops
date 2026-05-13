@@ -13,6 +13,17 @@ metadata:
 
 spec:
   rules:
+    - host: kong.nsanjula.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kong
+                port:
+                  number: 8000
+
     - host: keycloak.nsanjula.xyz
       http:
         paths:

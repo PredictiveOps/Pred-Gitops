@@ -7,3 +7,4 @@ spec:
   domains:
   - pred.nsanjula.xyz
   - keycloak.nsanjula.xyz
+  - kong.nsanjula.xyz
