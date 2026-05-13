@@ -69,8 +69,8 @@ data:
   KC_HTTP_ENABLED: "true"
   KC_REALM: "pred"
   KC_CLIENT_ID: "web-frontend"
-  KC_REDIRECT_URI: "http://pred.nsanjula.xyz/api/auth/callback/keycloak"
-  KC_WEB_ORIGIN: "http://pred.nsanjula.xyz"
+  KC_REDIRECT_URI: "https://pred.nsanjula.xyz/api/auth/callback/keycloak"
+  KC_WEB_ORIGIN: "https://pred.nsanjula.xyz"
   KC_LOG_LEVEL: "INFO"
 
 ---
@@ -84,9 +84,9 @@ metadata:
   namespace: pred
 data:
   NODE_ENV: "production"
-  NEXTAUTH_URL: "http://pred.nsanjula.xyz"
-  KEYCLOAK_URL: "http://keycloak.nsanjula.xyz"
-  KEYCLOAK_PUBLIC_URL: "http://keycloak.nsanjula.xyz"
+  NEXTAUTH_URL: "https://pred.nsanjula.xyz"
+  KEYCLOAK_URL: "https://keycloak.nsanjula.xyz"
+  KEYCLOAK_PUBLIC_URL: "https://keycloak.nsanjula.xyz"
   KEYCLOAK_REALM: "pred"
   KEYCLOAK_CLIENT_ID: "web-frontend"
 
@@ -179,7 +179,7 @@ data:
         config:
           origins:
             - "http://localhost:3000"
-            - "http://pred.nsanjula.xyz"
+            - "https://pred.nsanjula.xyz"
           methods:
             - GET
             - POST
