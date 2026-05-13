@@ -49,7 +49,7 @@ data:
   ML_KAFKA_OFFSET_RESET: "latest"
 
   # KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/predictive-maintenance/protocol/openid-connect/certs"
-  KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/pred/protocol/openid-connect/certs"
+  KEYCLOAK_JWKS_URL: "http://keycloak:8080/realms/prod-maintenance/protocol/openid-connect/certs"
   POLL_INTERVAL: "30"
 ---
 # -----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ data:
   KC_HOSTNAME_STRICT: "false"
   KC_PROXY_HEADERS: "xforwarded"
   KC_HTTP_ENABLED: "true"
-  KC_REALM: "pred"
+  KC_REALM: "prod-maintenance"
   KC_CLIENT_ID: "web-frontend"
   KC_REDIRECT_URI: "https://pred.nsanjula.xyz/api/auth/callback/keycloak"
   KC_WEB_ORIGIN: "https://pred.nsanjula.xyz"
@@ -87,7 +87,7 @@ data:
   NEXTAUTH_URL: "https://pred.nsanjula.xyz"
   KEYCLOAK_URL: "https://keycloak.nsanjula.xyz"
   KEYCLOAK_PUBLIC_URL: "https://keycloak.nsanjula.xyz"
-  KEYCLOAK_REALM: "pred"
+  KEYCLOAK_REALM: "prod-maintenance"
   KEYCLOAK_CLIENT_ID: "web-frontend"
 
 ---
@@ -213,7 +213,7 @@ data:
 
     jwt_secrets:
       - consumer: keycloak-consumer
-        key: "http://keycloak:8080/realms/pred"
+        key: "http://keycloak:8080/realms/prod-maintenance"
         algorithm: RS256
         # Replaced at runtime by kong-jwks-sync sidecar
         rsa_public_key: |
