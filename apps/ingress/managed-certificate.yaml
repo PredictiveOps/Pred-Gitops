@@ -1,0 +1,9 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: pred-cert
+  namespace: pred
+spec:
+  domains:
+  - pred.nsanjula.xyz
+  - keycloak.nsanjula.xyz
