@@ -72,7 +72,6 @@ data:
   KC_REDIRECT_URI: "http://pred.nsanjula.xyz/api/auth/callback/keycloak"
   KC_WEB_ORIGIN: "http://pred.nsanjula.xyz"
   KC_LOG_LEVEL: "INFO"
-  KC_PROXY: edge
 
 ---
 # -----------------------------------------------------------------------------
