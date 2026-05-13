@@ -4,8 +4,8 @@ metadata:
   name: keycloak-backendconfig
   namespace: pred
 spec:
-  healthChecks:
-  - checkIntervalSec: 15
+  healthCheck:
+    checkIntervalSec: 15
     port: 8080
     type: HTTP
     requestPath: /health/ready

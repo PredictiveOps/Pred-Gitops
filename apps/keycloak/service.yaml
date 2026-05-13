@@ -6,7 +6,7 @@ metadata:
   labels:
     app: keycloak
   annotations:
-    cloud.google.com/backend-config: '{"ports": {"8080":"keycloak-backendconfig"}}'
+    cloud.google.com/backend-config: '{"ports": {"8080": "keycloak-backendconfig"}}'
 spec:
   type: ClusterIP
   selector:
