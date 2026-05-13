@@ -1,3 +1,15 @@
+# apiVersion: cloud.google.com/v1
+# kind: BackendConfig
+# metadata:
+#   name: keycloak-backendconfig
+#   namespace: pred
+# spec:
+#   healthCheck:
+#     checkIntervalSec: 15
+#     port: 8080
+#     type: HTTP
+#     requestPath: /health/ready
+
 apiVersion: cloud.google.com/v1
 kind: BackendConfig
 metadata:
@@ -6,6 +18,6 @@ metadata:
 spec:
   healthCheck:
     checkIntervalSec: 15
-    port: 8080
+    port: 9000
     type: HTTP
     requestPath: /health/ready
