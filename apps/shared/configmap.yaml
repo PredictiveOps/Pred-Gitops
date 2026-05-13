@@ -86,8 +86,8 @@ metadata:
 data:
   NODE_ENV: "production"
   NEXTAUTH_URL: "http://pred.nsanjula.xyz"
-  KEYCLOAK_URL: "http://keycloak:8080"
-  KEYCLOAK_PUBLIC_URL: "http://keycloak.nsanjula.xyz:8080"
+  KEYCLOAK_URL: "http://keycloak.nsanjula.xyz"
+  KEYCLOAK_PUBLIC_URL: "http://keycloak.nsanjula.xyz"
   KEYCLOAK_REALM: "prod-maintenance"
   KEYCLOAK_CLIENT_ID: "web-frontend"
 
