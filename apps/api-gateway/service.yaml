@@ -6,7 +6,7 @@ metadata:
   labels:
     app: kong
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: kong
   ports:
